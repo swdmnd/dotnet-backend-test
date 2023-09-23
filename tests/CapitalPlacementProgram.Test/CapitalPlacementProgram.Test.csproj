@@ -22,5 +22,7 @@
     </PackageReference>
   </ItemGroup>
 
-	
+  <ItemGroup>
+	<ProjectReference Include="..\..\CapitalPlacementProgram\CapitalPlacement.csproj" />
+  </ItemGroup>
 </Project>
