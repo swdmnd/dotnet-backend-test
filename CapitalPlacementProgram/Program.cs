@@ -26,6 +26,7 @@ jobs.MapPost("/create", CreateJob);
 jobs.MapPut("/forms/{id}", AddApplicationForm);
 jobs.MapPut("/cover/{id}", UploadCoverImage);
 jobs.MapGet("/cover/{id}", GetCoverImage);
+jobs.MapPut("/workflow/{id}", AddWorkflow);
 
 app.MapGet("/", () => "Hello World!");
 
@@ -137,6 +138,19 @@ static async Task<IResult> GetCoverImage(Guid id, JobContext db, HttpContext htt
 
     httpContext.Response.Headers.Add("Content-Disposition", "inline; filename=cover");
     return TypedResults.Bytes(jobItem.ApplicationForm.CoverImage.Content, "image/"+jobItem.ApplicationForm.CoverImage.Extension);
+}
+
+static async Task<IResult> AddWorkflow(Guid id, Workflow workflow, JobContext db)
+{
+    var jobItem = await db.JobItems.FindAsync(id);
+
+    if (jobItem is null) return TypedResults.NotFound();
+
+    jobItem.Workflow = workflow;
+
+    await db.SaveChangesAsync();
+
+    return TypedResults.NoContent();
 }
 
 // Expose class for testing purposes.

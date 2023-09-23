@@ -8,6 +8,7 @@ namespace CapitalPlacementProgram.Models
         public Guid Id { get; set; }
         public JobDetails Details { get; set; }
         public ApplicationForm? ApplicationForm { get; set; }
+        public Workflow? Workflow { get; set; }
         public string CreatedOn { get; set; }
         public string CreatedBy { get; set; }
     }
@@ -17,9 +18,10 @@ namespace CapitalPlacementProgram.Models
         public Guid Id { get; set; }
         public JobDetails Details { get; set; }
         public ApplicationFormDto? ApplicationForm { get; set; }
+        public Workflow? Workflow { get; set; }
 
         public JobItemDto() { }
         public JobItemDto(JobItem jobItem) 
-            => (Id, Details, ApplicationForm) = (jobItem.Id, jobItem.Details, new ApplicationFormDto(jobItem.Id, jobItem.ApplicationForm));
+            => (Id, Details, ApplicationForm, Workflow) = (jobItem.Id, jobItem.Details, new ApplicationFormDto(jobItem.Id, jobItem.ApplicationForm), jobItem.Workflow);
     }
 }
