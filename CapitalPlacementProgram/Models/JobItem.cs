@@ -7,6 +7,7 @@ namespace CapitalPlacementProgram.Models
         [Key]
         public Guid Id { get; set; }
         public JobDetails Details { get; set; }
+        public ApplicationForm? ApplicationForm { get; set; }
         public string CreatedOn { get; set; }
         public string CreatedBy { get; set; }
     }
@@ -15,27 +16,10 @@ namespace CapitalPlacementProgram.Models
     {
         public Guid Id { get; set; }
         public JobDetails Details { get; set; }
+        public ApplicationFormDto? ApplicationForm { get; set; }
 
         public JobItemDto() { }
         public JobItemDto(JobItem jobItem) 
-            => (Id, Details) = (jobItem.Id, jobItem.Details);
-    }
-
-    public class JobDetails
-    {
-        public string Title { get; set; }
-        public string? Summary { get; set; }
-        public string Description { get; set; }
-        public List<string>? KeySkills { get; set; }
-        public string? Benefits { get; set; }
-        public string? Criteria { get; set; }
-        public string Type { get; set; }
-        public string? DateStart { get; set; }
-        public string DateOpenApplication { get; set; }
-        public string DateCloseApplication { get; set; }
-        public long? Duration { get; set; }
-        public string Location { get; set; }
-        public string? MinimalQualifications { get; set; }
-        public int? MaxApplicants { get; set; }
+            => (Id, Details, ApplicationForm) = (jobItem.Id, jobItem.Details, new ApplicationFormDto(jobItem.Id, jobItem.ApplicationForm));
     }
 }

@@ -23,6 +23,9 @@ jobs.MapGet("/", GetAllJobs);
 jobs.MapGet("/{id}", GetJob);
 jobs.MapDelete("/{id}", DeleteJob);
 jobs.MapPost("/create", CreateJob);
+jobs.MapPut("/forms/{id}", AddApplicationForm);
+jobs.MapPut("/cover/{id}", UploadCoverImage);
+jobs.MapGet("/cover/{id}", GetCoverImage);
 
 app.MapGet("/", () => "Hello World!");
 
@@ -68,6 +71,72 @@ static async Task<IResult> DeleteJob(Guid id, JobContext db)
     }
 
     return TypedResults.NotFound();
+}
+
+static async Task<IResult> AddApplicationForm(Guid id, ApplicationForm form, JobContext db)
+{
+    var jobItem = await db.JobItems.FindAsync(id);
+
+    if (jobItem is null) return TypedResults.NotFound();
+
+    jobItem.ApplicationForm = form;
+
+    await db.SaveChangesAsync();
+
+    return TypedResults.NoContent();
+}
+
+static async Task<IResult> UploadCoverImage(Guid id, HttpContext httpContext, JobContext db)
+{
+    var jobItem = await db.JobItems.FindAsync(id);
+
+    if (jobItem is null) return TypedResults.NotFound();
+
+    if (httpContext.Request.Form.Files.Count > 0)
+    {
+        var file = httpContext.Request.Form.Files[0];
+
+        // TODO: checks againts mime type or file signature instead of filename extension
+        string[] permittedExtensions = { ".png", ".jpg", ".jpeg", ".bmp" };
+        var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+        if (string.IsNullOrEmpty(ext) || !permittedExtensions.Contains(ext))
+        {
+            // The extension is invalid ... discontinue processing the file
+            return TypedResults.UnprocessableEntity();
+        }
+
+        using (var stream = new MemoryStream())
+        {
+            await file.CopyToAsync(stream);
+
+            // Less than 1 MB
+            if(stream.Length < 1048576)
+            {
+                jobItem.ApplicationForm.CoverImage = new CoverImage { 
+                    Content = stream.ToArray(),
+                    Extension = ext.Substring(1)
+                };
+
+                await db.SaveChangesAsync();
+                return TypedResults.NoContent();
+            }
+        }
+        
+    }
+
+    return TypedResults.UnprocessableEntity();
+}
+
+static async Task<IResult> GetCoverImage(Guid id, JobContext db, HttpContext httpContext)
+{
+    var jobItem = await db.JobItems.FindAsync(id);
+
+    if (jobItem is null || jobItem.ApplicationForm.CoverImage is null) return TypedResults.NotFound();
+
+    httpContext.Response.Headers.Add("Cache-Control", "no-cache, must-revalidate, max-age=0, post-check=0, pre-check=0");
+
+    httpContext.Response.Headers.Add("Content-Disposition", "inline; filename=cover");
+    return TypedResults.Bytes(jobItem.ApplicationForm.CoverImage.Content, "image/"+jobItem.ApplicationForm.CoverImage.Extension);
 }
 
 // Expose class for testing purposes.
