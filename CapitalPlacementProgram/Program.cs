@@ -5,12 +5,6 @@ using Microsoft.AspNetCore.Http;
 using System.Net.Http;
 using Azure.Core;
 
-using (var context = new JobContext())
-{
-    // Ensure Database exists
-    await context.Database.EnsureCreatedAsync();
-}
-
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<JobContext>();
 
@@ -34,13 +28,20 @@ app.MapGet("/", () => "Hello World!");
 
 app.Run();
 
+using (var context = new JobContext())
+{
+    // Ensure Database exists
+    await context.Database.EnsureCreatedAsync();
+}
+
+
 static async Task<IResult> GetAllJobs(JobContext db)
 {
     return TypedResults.Ok(await db.JobItems.Select(x => new JobItemDto(x)).ToArrayAsync());
 }
 static async Task<IResult> GetPublishedJobs(JobContext db)
 {
-    return TypedResults.Ok(await db.JobItems.Where(x => x.IsPublished).ToArrayAsync());
+    return TypedResults.Ok(await db.JobItems.Where(x => x.IsPublished).Select(x => new JobItemDto(x)).ToArrayAsync());
 }
 
 static async Task<IResult> GetJob(Guid id, JobContext db)
