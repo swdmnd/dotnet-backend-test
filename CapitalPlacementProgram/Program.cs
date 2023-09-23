@@ -23,10 +23,12 @@ jobs.MapGet("/", GetAllJobs);
 jobs.MapGet("/{id}", GetJob);
 jobs.MapDelete("/{id}", DeleteJob);
 jobs.MapPost("/create", CreateJob);
-jobs.MapPut("/forms/{id}", AddApplicationForm);
-jobs.MapPut("/cover/{id}", UploadCoverImage);
+jobs.MapPatch("/forms/{id}", AddApplicationForm);
+jobs.MapPatch("/cover/{id}", UploadCoverImage);
 jobs.MapGet("/cover/{id}", GetCoverImage);
-jobs.MapPut("/workflow/{id}", AddWorkflow);
+jobs.MapPatch("/workflow/{id}", AddWorkflow);
+jobs.MapGet("/published", GetPublishedJobs);
+jobs.MapPatch("/publish/{id}", PublishJob);
 
 app.MapGet("/", () => "Hello World!");
 
@@ -35,6 +37,10 @@ app.Run();
 static async Task<IResult> GetAllJobs(JobContext db)
 {
     return TypedResults.Ok(await db.JobItems.Select(x => new JobItemDto(x)).ToArrayAsync());
+}
+static async Task<IResult> GetPublishedJobs(JobContext db)
+{
+    return TypedResults.Ok(await db.JobItems.Where(x => x.IsPublished).ToArrayAsync());
 }
 
 static async Task<IResult> GetJob(Guid id, JobContext db)
@@ -72,6 +78,19 @@ static async Task<IResult> DeleteJob(Guid id, JobContext db)
     }
 
     return TypedResults.NotFound();
+}
+
+static async Task<IResult> PublishJob(Guid id, JobContext db)
+{
+    var jobItem = await db.JobItems.FindAsync(id);
+
+    if (jobItem is null) return TypedResults.NotFound();
+
+    jobItem.IsPublished = true;
+
+    await db.SaveChangesAsync();
+
+    return TypedResults.Ok();
 }
 
 static async Task<IResult> AddApplicationForm(Guid id, ApplicationForm form, JobContext db)
